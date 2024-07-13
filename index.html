@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en"> 
+<head>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .title { font-size: 36px; text-anchor: middle; font-family: "Helvetica"; }
+        .axis-title { font-size: 20px; font-wight: bold; font-family: "Helvetica"; }
+        .tooltip {
+            position: absolute;
+            background-color: #FF0000;
+            border: 1px solid #d3d3d3;
+            border-radius: 4px;
+            padding: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div id="scatterplot"></div>
+    <div id="tooltip" class="tooltip"></div>
+    <div class="nav-buttons">
+        <button id="first">four cylinders</button>
+        <button id="second">six cylinders</button>
+        <button id="third">eight cylinders</button>
+    </div>
+    <script type="module">
+        const width = 1000;
+        const height = 666.67;
+        const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+
+        const datum = await d3.csv("https://flunky.github.io/cars2017.csv");
+
+        const fourCylinders = [];
+        const sixCylinders = [];
+        const eightCylinders = [];
+
+        for (const dataPoint of datum) {
+            if (dataPoint.EngineCylinders === '4') {
+                fourCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG)})
+            } else if (dataPoint.EngineCylinders === '6') {
+                sixCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG)})
+            } else if (dataPoint.EngineCylinders === '8') {
+                eightCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG)})
+            }
+        }
+
+        const fourCylindersSubset = [
+            { rect: { x: 26.5, y: 19, width: 10, height: 9 } }
+        ];
+        const sixCylindersSubset = [
+            { rect: { x: 21.5, y: 15, width: 8, height: 8.5 } }
+        ];
+        const eightCylindersSubset = [
+            { rect: { x: 17.5, y: 12, width: 9, height: 5.5 } }
+        ];
+
+        const datasets = [
+        {data: fourCylinders, subsets: fourCylindersSubset, text: "City MPG is mostly clustered in the 20-30 range", x: 425, y: 498}, 
+        {data: sixCylinders, subsets: sixCylindersSubset, text: "City MPG is now clustered in the range of 15-25 and Highway MPG has also fallen", x: 270, y: 575},
+        {data: eightCylinders, subsets: eightCylindersSubset, text: "City MPG has fallen to 10-20, Highway MPG falls further as well", x: 180, y: 632}
+        ];
+
+        let currentSlide = 0;
+        const transformString = "translate(" + margin.left.toString() + "," + margin.top.toString() + ")";
+        const svg = d3.select("#scatterplot")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", transformString);
+
+        const tooltip = d3.select("#tooltip");
+
+        const xScale = d3.scaleLinear().domain([15, 50]).range([0, width]);
+        const yScale = d3.scaleLinear().domain([10, 45]).range([height, 0]);
+
+        const xAxis = d3.axisBottom(xScale);
+        const yAxis = d3.axisLeft(yScale);
+
+        const translateString = "translate(0," + height.toString() + ")";
+        svg.append("g")
+            .attr("transform", translateString)
+            .call(xAxis);
+
+        svg.append("g")
+            .call(yAxis);
+
+        svg.append("text")
+            .attr("class", "title")
+            .attr("x", width / 2)
+            .attr("y", margin.top / 2)
+            .text("City vs Highway MPG");
+
+        svg.append("text")
+            .attr("class", "axis-title")
+            .attr("text-anchor", "middle")
+            .attr("x", width / 2)
+            .attr("y", height + margin.bottom - 5)
+            .text("Average Highway MPG");
+
+        svg.append("text")
+            .attr("class", "axis-title")
+            .attr("text-anchor", "middle")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -margin.left + 20)
+            .attr("x", -height / 2)
+            .text("Average City MPG");
+
+        const g = svg.append("g").attr("transform", transformString);
+
+
+        const textBox = g.append("text")
+            .attr("x", innerWidth / 8)
+            .attr("y", 200)
+            .attr("text-anchor", "middle")
+            .attr("font-size", "16px")
+            .attr("font-family", "Helvetica")
+            .text("Hover over points to see MPG values");
+
+        const bbox = textBox.node().getBBox();
+        g.insert("rect", "text")
+            .attr("x", bbox.x - 5)
+            .attr("y", bbox.y - 2)
+            .attr("width", bbox.width + 10)
+            .attr("height", bbox.height + 4)
+            .attr("fill", "lightgreen")
+
+        function drawScatterplot(dataset) {
+            const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+            svg.selectAll("text").remove();
+
+
+            const xScale = d3.scaleLinear().domain([15, 50]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([10, 45]).range([height, 0]);
+
+            const xAxis = d3.axisBottom(xScale);
+            const yAxis = d3.axisLeft(yScale);
+
+            const translateString = "translate(0," + height.toString() + ")";
+
+            svg.append("g")
+                .attr("transform", translateString)
+                .call(xAxis);
+
+            svg.append("g")
+                .call(yAxis);
+
+            svg.append("text")
+                .attr("class", "title")
+                .attr("x", width / 2)
+                .attr("y", margin.top / 2)
+                .text("City vs Highway MPG");
+
+            svg.append("text")
+                .attr("class", "axis-title")
+                .attr("text-anchor", "middle")
+                .attr("x", width / 2)
+                .attr("y", height + margin.bottom - 5)
+                .text("Average Highway MPG");
+
+            svg.append("text")
+                .attr("class", "axis-title")
+                .attr("text-anchor", "middle")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left + 20)
+                .attr("x", -height / 2)
+                .text("Average City MPG");
+
+            const transformString = "translate(" + margin.left.toString() + "," + margin.top.toString() + ")";
+            const g = svg.append("g").attr("transform", transformString);
+
+
+            const textBox = g.append("text")
+                .attr("x", innerWidth / 8)
+                .attr("y", 200)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-family", "Helvetica")
+                .text("Hover over points to see MPG values");
+
+            const bbox = textBox.node().getBBox();
+            g.insert("rect", "text")
+                .attr("x", bbox.x - 5)
+                .attr("y", bbox.y - 2)
+                .attr("width", bbox.width + 10)
+                .attr("height", bbox.height + 4)
+                .attr("fill", "lightgreen");
+
+            const x = dataset.x;
+            const y = dataset.y;
+
+            const textBox2 = g.append("text")
+            .attr("x", x)
+            .attr("y", y)
+            .attr("text-anchor", "middle")
+            .attr("font-size", "16px")
+            .attr("font-family", "Helvetica")
+            .style("fill", "red")
+            .text(dataset.text);
+
+            const data = dataset.data;
+            const subsets = dataset.subsets;
+
+            svg.selectAll(".dot").remove();
+            svg.selectAll(".rect").remove();
+            
+            svg.selectAll(".dot") 
+                .data(data)
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("cx", d => xScale(d.x))
+                .attr("cy", d => yScale(d.y))
+                .attr("r", 5)
+                .attr("fill", "blue")
+                .on("mouseover", function(event, d) {
+                    tooltip.transition().duration(200).style("opacity", 1);
+                    tooltip.html(`<br/> Avg Highway MPG: ${d.x}<br/> Avg City MPG: ${d.y}`)
+                        .style("left", event.pageX + "px")
+                        .style("top", event.pageY + "px");
+                })
+                .on("mouseout", function() {
+                    tooltip.transition().duration(200).style("opacity", 0);
+                });
+
+            subsets.forEach(subset => {
+                svg.append("rect")
+                    .attr("class", "rect")
+                    .attr("x", xScale(subset.rect.x))
+                    .attr("y", yScale(subset.rect.y + subset.rect.height))
+                    .attr("width", xScale(subset.rect.width) - xScale(0))
+                    .attr("height", yScale(0) - yScale(subset.rect.height))
+                    .attr("stroke", "red")
+                    .attr("fill", "none");
+            });
+        }
+
+        document.getElementById("first").addEventListener("click", () => {
+            currentSlide = 0
+            drawScatterplot(datasets[currentSlide]);
+        });
+
+        document.getElementById("second").addEventListener("click", () => {
+            currentSlide = 1
+            drawScatterplot(datasets[currentSlide]);
+        });
+
+        document.getElementById("third").addEventListener("click", () => {
+            currentSlide = 2
+            drawScatterplot(datasets[currentSlide]);
+        });
+
+        drawScatterplot(datasets[currentSlide]);
+    </script>
+</body>
+</html>
