@@ -24,8 +24,17 @@
         <button id="first">four cylinders</button>
         <button id="second">six cylinders</button>
         <button id="third">eight cylinders</button>
+        <button id="fourth">gasoline</button>
+        <button id="fifth">diesel</button>
+        
+        <button id="seventh">all fuels</button>
     </div>
     <script type="module">
+
+        d3.select("#fourth").style('background-color', '#CBC3E3');
+        d3.select("#fifth").style('background-color', '#CBC3E3');
+        
+        d3.select("#seventh").style('background-color', '#CBC3E3');
         const width = 1000;
         const height = 666.67;
         const margin = { top: 20, right: 30, bottom: 40, left: 50 };
@@ -35,14 +44,13 @@
         const fourCylinders = [];
         const sixCylinders = [];
         const eightCylinders = [];
-
         for (const dataPoint of datum) {
             if (dataPoint.EngineCylinders === '4') {
-                fourCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG)})
+                fourCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG), fuel: dataPoint.Fuel})
             } else if (dataPoint.EngineCylinders === '6') {
-                sixCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG)})
+                sixCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG), fuel: dataPoint.Fuel})
             } else if (dataPoint.EngineCylinders === '8') {
-                eightCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG)})
+                eightCylinders.push({x: Number(dataPoint.AverageHighwayMPG), y: Number(dataPoint.AverageCityMPG), fuel: dataPoint.Fuel})
             }
         }
 
@@ -128,6 +136,20 @@
             .attr("fill", "lightgreen")
 
         function drawScatterplot(dataset) {
+            console.log(dataset);
+            if (dataset.fuel === "All") {
+                dataset.newData = dataset.data;
+            }
+            else {
+                const newData = [];
+                for (const item of dataset.data) {
+                    if (item.fuel === dataset.fuel) {
+                        newData.push(item);
+                    }
+                }
+                dataset.newData = newData;
+            }
+
             const margin = { top: 20, right: 30, bottom: 40, left: 50 };
             svg.selectAll("text").remove();
 
@@ -191,16 +213,19 @@
             const x = dataset.x;
             const y = dataset.y;
 
-            const textBox2 = g.append("text")
-            .attr("x", x)
-            .attr("y", y)
-            .attr("text-anchor", "middle")
-            .attr("font-size", "16px")
-            .attr("font-family", "Helvetica")
-            .style("fill", "red")
-            .text(dataset.text);
+             if (dataset.fuel === "All") {
+                const textBox2 = g.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-family", "Helvetica")
+                .style("fill", "red")
+                .text(dataset.text);
+             }
 
-            const data = dataset.data;
+            const data = dataset.newData ? dataset.newData : dataset.data;
+            console.log(data);
             const subsets = dataset.subsets;
 
             svg.selectAll(".dot").remove();
@@ -224,7 +249,8 @@
                     tooltip.transition().duration(200).style("opacity", 0);
                 });
 
-            subsets.forEach(subset => {
+            if (dataset.fuel === "All") {
+                subsets.forEach(subset => {
                 svg.append("rect")
                     .attr("class", "rect")
                     .attr("x", xScale(subset.rect.x))
@@ -233,24 +259,53 @@
                     .attr("height", yScale(0) - yScale(subset.rect.height))
                     .attr("stroke", "red")
                     .attr("fill", "none");
-            });
+                });
+            }
+            dataset.newData = undefined;
         }
 
         document.getElementById("first").addEventListener("click", () => {
             currentSlide = 0
-            drawScatterplot(datasets[currentSlide]);
+            const currentDataset = datasets[currentSlide];
+            currentDataset.fuel = "All";
+            drawScatterplot(currentDataset);
         });
 
         document.getElementById("second").addEventListener("click", () => {
             currentSlide = 1
-            drawScatterplot(datasets[currentSlide]);
+            const currentDataset = datasets[currentSlide];
+            currentDataset.fuel = "All";
+            drawScatterplot(currentDataset);
         });
 
         document.getElementById("third").addEventListener("click", () => {
             currentSlide = 2
-            drawScatterplot(datasets[currentSlide]);
+            const currentDataset = datasets[currentSlide];
+            currentDataset.fuel = "All";
+            drawScatterplot(currentDataset);
         });
 
+        document.getElementById("fourth").addEventListener("click", () => {
+            const currentDataset = datasets[currentSlide];
+            currentDataset.fuel = "Gasoline";
+            drawScatterplot(currentDataset);
+        });
+
+        document.getElementById("fifth").addEventListener("click", () => {
+            const currentDataset = datasets[currentSlide];
+            currentDataset.fuel = "Diesel";
+            drawScatterplot(currentDataset);
+        });
+
+
+        document.getElementById("seventh").addEventListener("click", () => {
+            const currentDataset = datasets[currentSlide];
+            currentDataset.fuel = "All";
+            drawScatterplot(currentDataset);
+        });
+
+        const currentDataset = datasets[currentSlide];
+        currentDataset.fuel = "All";
         drawScatterplot(datasets[currentSlide]);
     </script>
 </body>
